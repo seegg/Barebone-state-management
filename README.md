@@ -123,16 +123,15 @@ const Counter = () => {
     (newState, oldState) => newState.counter.count !== oldState.counter.count
   );
   
+  // Only update the local count if the store count is bigger by at least 3.
   const count = useCounterStore(
     state => state.counter.count,
-    // Only update the local count if the store count is bigger by at least 3.
-    (newState, oldState) => newState.counter.count - count > 3
+    (newState) => newState.counter.count - count > 3
   );
 
-...
+ // Update the local state every time the store updates.
   const count = useCounterStore(
     state => state.counter.count,
-    // Update the local state every time the store updates.
     () => true
   );
 }
