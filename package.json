@@ -1,5 +1,5 @@
 {
-  "name": "react-state-manager",
+  "name": "barebone-state-management",
   "private": true,
   "version": "0.0.0",
   "type": "module",
