@@ -1,7 +1,7 @@
 # [Barebone](src/barebone)
 Simple React state management using hooks and with typing for TS.
 
-[Demo](https://seegg.github.io/Barebone-state-management/) using
+[Demo](https://seegg.github.io/barebone-demo/) using
 a simple counter shared between sibling components.
 
 ## Creating the store
@@ -76,23 +76,23 @@ export const {useStore, asyncActions, store} = createStore({
 ```
 ## Using the store
 Import the hook and actions from where the store is defined.`useStore` 
-accepts a select function with the store pass in as the argument which
-can be use to narrow down the return value from the store.
+accepts a select function that has the store as the first param which
+can be use to narrow down the return value for the hook.
 
 Actions are not restricted to react components and can be use anywhere.
 ```ts
-import {useStore: useCounterStore, actions} from './counterStore'
+import {useCounterStore, counterActions} from './counterStore'
 
 const Counter = () => {
   const count = useCounterStore(state => state.counter.count);
 
   const setCountTo = (value: number) => {
-    actions.setCounterTo(value);
+    counterActions.setCounterTo(value);
   }
 
   return(
     ...
-    <button onClick={actions.increment}>
+    <button onClick={counterActions.increment}>
           count is {count}
     </button>
     ...
@@ -101,22 +101,27 @@ const Counter = () => {
 
 ```
 
-`useStore` also accepts an optional function to test if the local 
+`useStore` also accepts an additional function to check if the local 
 state should be updated when the store is updated. This can be
 use to avoid unnecessary rerenders.
 
 The check is done when the store is updating. The new state and
-the old state is pass to the function as the first and second arguments.
-This function returns a boolean indicating whether the local state should 
-be updated or not.
+the old state is pass into the function as the first and second argument.
+It returns a boolean indicating whether the local state should be
+updated or not.
 
-If no callback function is supplied, the default behaviour is to do
+If no function is defined, the default behaviour for the check is to do
 a strict comparison `===` between the old state and the new state using the
 same state property as the one returned from `useStore` using the select
 function.
 
 ```ts
 const Counter = () => {
+  // Default bahaviour
+  const count = useCounterStore(
+    state => state.counter.count,
+    (newState, oldState) => newState.counter.count !== oldState.counter.count
+  );
   
   const count = useCounterStore(
     state => state.counter.count,
