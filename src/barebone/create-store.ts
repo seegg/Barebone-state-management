@@ -161,6 +161,19 @@ export const createActions = <
   actionType: ActionTypes = ActionTypes.sync,
 ): StoreActions<UserDefinedActions, typeof actionType> => {
   const result = {} as StoreActions<UserDefinedActions, typeof actionType>;
+
+  /**
+   * Helper function for updating the store with a new state.
+   * @param newStateValue values for updating the store.
+   */
+  const updateStateHelper = (newState: any) => {
+    const newStore = {
+      [storeName]: newState,
+    } as StoreState;
+    updateLocalStates(store, newStore, stateListeners);
+    store[storeName] = newState;
+  };
+
   /**
    * Take each of the actions defined in during store creation and
    * use a wrapper to hide the store state, this way only the params
@@ -173,26 +186,10 @@ export const createActions = <
      */
     result[key] = (...payload: unknown[]) => {
       if (actionType === ActionTypes.async) {
-        /**
-         * Callback pass to async actions as the first argument.
-         * Use for updating the store inside the async action.
-         * @param newStateValue values for updating the store.
-         */
-        const updateStateCallback = (newStateValue: any) => {
-          const newStore = {
-            [storeName]: newStateValue,
-          } as StoreState;
-          updateLocalStates(store, newStore, stateListeners);
-          store[storeName] = newStateValue;
-        };
-        actions[key](updateStateCallback, store[storeName], ...payload);
+        actions[key](updateStateHelper, store[storeName], ...payload);
       } else {
         const newStateValue = actions[key](store[storeName], ...payload);
-        const newStore = {
-          [storeName]: newStateValue,
-        } as StoreState;
-        updateLocalStates(store, newStore, stateListeners);
-        store[storeName] = newStateValue;
+        updateStateHelper(newStateValue);
       }
     };
   }
