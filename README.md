@@ -26,6 +26,10 @@ async actions.
 When updating a state, a new state must be returned instead of mutating
 the existing one.
 
+For types with TS, just defined them as needed when creating the store
+and they will transfer over to the hooks and actions without any additional
+work.
+
 ```ts
 import {createStore} from './barebone'
 
