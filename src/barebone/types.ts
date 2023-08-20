@@ -6,9 +6,11 @@ export interface StoreOptions<
   UserDefinedActionsAsync extends AsyncActions<State>,
 > {
   /**
-   * A name use to identify the store.
+   * A name use to identify the store. This value is also
+   * use as an identifier on the store to retrieve the state.
    */
   name: Name;
+
   /** The initial state of the store. */
   initialState: State;
   /**
@@ -32,6 +34,7 @@ export interface StoreOptions<
    * }
    */
   actions?: UserDefinedActions;
+
   /**
    * For async actions, the first two params in the function
    * is a callback function and the state, the callback function
