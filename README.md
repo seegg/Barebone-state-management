@@ -47,7 +47,7 @@ export const {useStore, actions, store} = createStore({
 (one: number, two: number) => void
 // when imported from the store.
 ```
-## Async ActionsOnly update the local count if the store count is bigger by at least 3
+## Async Actions
 
 To use async actions, add them under `asyncActions` when creating the
 store. Unlike synchronous actions the first param is a callback for setting 
@@ -100,7 +100,7 @@ const Counter = () => {
 }
 
 ```
-
+## Conditional updates
 `useStore` also accepts an additional function to check if the local 
 state should be updated when the store is updated. This can be
 use to avoid unnecessary rerenders.
