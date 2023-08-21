@@ -1,4 +1,3 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import type {
   Actions,
@@ -166,7 +165,7 @@ export const createActions = <
    * Helper function for updating the store with a new state.
    * @param newStateValue values for updating the store.
    */
-  const updateStateHelper = (newState: any) => {
+  const updateStateHelper = (newState: StoreState[Name]) => {
     const newStore = {
       [storeName]: newState,
     } as StoreState;

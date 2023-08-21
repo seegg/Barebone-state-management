@@ -26,9 +26,7 @@ async actions.
 When updating a state, a new state must be returned instead of mutating
 the existing one.
 
-For types with TS, just defined them as needed when creating the store
-and they will transfer over to the hooks and actions without any additional
-work.
+To use type with TS, just defined them as needed when creating the store.
 
 ```ts
 import {createStore} from './barebone'
@@ -54,9 +52,10 @@ export const {useStore, actions, store} = createStore({
 ## Async Actions
 
 To use async actions, add them under `asyncActions` when creating the
-store. Unlike synchronous actions the first param is a callback for setting 
-the new state and the second param is the current state. Instead of directly 
-returning the new state, it's instead pass to the callback. 
+store. Unlike synchronous actions where the new state is returned, for async
+actions the new state needs to be pass to the `setState` helper which
+is the first param in an async action. Async actions is available under
+the `asyncActions` property after creating the store.
 
 ```ts
 import {createStore} from './barebone'
