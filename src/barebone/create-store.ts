@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type {
   Actions,
   StoreOptions,
-  State,
+  store,
   StateListeners,
   EqualityFn,
   StoreActions,
@@ -57,25 +57,24 @@ import { ActionTypes } from './types';
  *
  */
 export const createStore = <
-  StateOption,
   Name extends string,
-  ActionOption extends Actions<StateOption>,
-  AsyncActionOptions extends AsyncActions<StateOption>,
-  SelectFn extends (state: State<Name, StateOption>) => ReturnType<SelectFn>,
-  StoreState extends State<Name, StateOption>,
+  State,
+  ActionOption extends Actions<State>,
+  AsyncActionOptions extends AsyncActions<State>,
+  SelectFn extends (state: store<Name, State>) => ReturnType<SelectFn>,
 >(
-  options: StoreOptions<StateOption, Name, ActionOption, AsyncActionOptions>,
+  options: StoreOptions<State, Name, ActionOption, AsyncActionOptions>,
 ): {
   useStore: <StoreSelect extends SelectFn>(
     select: StoreSelect,
-    equalFn?: EqualityFn<StoreState>,
+    equalFn?: EqualityFn<store<Name, State>>,
   ) => ReturnType<StoreSelect>;
   actions: StoreActions<ActionOption, ActionTypes.sync>;
   asyncActions: StoreActions<AsyncActionOptions, ActionTypes.async>;
-  store: StoreState;
+  store: store<Name, State>;
 } => {
-  const store = { [options.name]: options.initialState } as StoreState;
-  const stateListeners: StateListeners<StoreState> = new Map();
+  const store = { [options.name]: options.initialState } as store<Name, State>;
+  const stateListeners: StateListeners<store<Name, State>> = new Map();
 
   // Construct the hooks that are use to retrieve the
   // state and actions.
@@ -101,7 +100,7 @@ export const createStore = <
  * Create a custom hook that can be used inside functions to
  * retrieve the store state.
  */
-export const createUseStoreHook = <StoreState extends State>(
+export const createUseStoreHook = <StoreState extends store>(
   store: StoreState,
   stateListeners: StateListeners<StoreState>,
 ): (<SelectFn extends (state: StoreState) => ReturnType<SelectFn>>(
@@ -123,7 +122,9 @@ export const createUseStoreHook = <StoreState extends State>(
     select: T,
     equalFn?: EqualityFn<StoreState>,
   ): ReturnType<T> => {
-    const [storeState, setStoreState] = useState<StoreState>(store);
+    const [storeState, setStoreState] = useState<StoreState>(
+      JSON.parse(JSON.stringify(store)),
+    );
     // Use the setState function as the listener for store changes
     // and trigger rerenders.
     if (!stateListeners.has(setStoreState)) {
@@ -149,14 +150,13 @@ export const createUseStoreHook = <StoreState extends State>(
  * For async actions, isAsync must be set to true.
  */
 export const createActions = <
-  StoreState extends State,
   UserDefinedActions extends Actions,
   Name extends string,
 >(
   actions: UserDefinedActions,
-  store: StoreState,
+  store: store,
   storeName: Name,
-  stateListeners: StateListeners<StoreState>,
+  stateListeners: StateListeners<store>,
   actionType: ActionTypes = ActionTypes.sync,
 ): StoreActions<UserDefinedActions, typeof actionType> => {
   const result = {} as StoreActions<UserDefinedActions, typeof actionType>;
@@ -165,10 +165,10 @@ export const createActions = <
    * Helper function for updating the store with a new state.
    * @param newStateValue values for updating the store.
    */
-  const updateStateHelper = (newState: StoreState[Name]) => {
+  const updateStoreHelper = (newState: store[Name]) => {
     const newStore = {
       [storeName]: newState,
-    } as StoreState;
+    } as store;
     updateLocalStates(store, newStore, stateListeners);
     store[storeName] = newState;
   };
@@ -185,10 +185,10 @@ export const createActions = <
      */
     result[key] = (...payload: unknown[]) => {
       if (actionType === ActionTypes.async) {
-        actions[key](updateStateHelper, store[storeName], ...payload);
+        actions[key](updateStoreHelper, store[storeName], ...payload);
       } else {
         const newStateValue = actions[key](store[storeName], ...payload);
-        updateStateHelper(newStateValue);
+        updateStoreHelper(newStateValue);
       }
     };
   }
@@ -196,16 +196,16 @@ export const createActions = <
 };
 
 /**
- * Helper for calling the listeners when the store
- * is being updated.
+ * Helper for calling the local states when the
+ * state on the store changes.
  * @param oldStore current store state.
  * @param newStore new state the store is being updated to.
  * @param stateListeners list of listeners.
  */
-const updateLocalStates = <StoreState extends State>(
-  oldStore: StoreState,
-  newStore: StoreState,
-  stateListeners: StateListeners<StoreState>,
+const updateLocalStates = (
+  oldStore: store,
+  newStore: store,
+  stateListeners: StateListeners<store>,
 ) => {
   stateListeners.forEach((listener) => {
     // Check if new store state meets conditions for

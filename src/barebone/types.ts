@@ -194,4 +194,4 @@ export type useActionsHook<SelectFn extends (...args: any) => any> = (
 ) => ReturnType<SelectFn>;
 
 /** The state of the store */
-export type State<Name extends string = string, S = any> = { [key in Name]: S };
+export type store<Name extends string = string, S = any> = { [key in Name]: S };
