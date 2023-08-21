@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type {
   Actions,
   StoreOptions,
-  store,
+  Store,
   StateListeners,
   EqualityFn,
   StoreActions,
@@ -47,12 +47,11 @@ import { ActionTypes } from './types';
  *  }
  * );
  *
- * // The state is stored inside a property with a key that
- * // is the same as the name provided during store creation.
- * // Given the store options above, to access the count in the store:
+ * // To access the count inside of a component:
+ *
  * const count = useStore(state => state.counter.count);
  *
- * // Add to the count.
+ * // Add 3 to the count.
  * actions.add(3);
  *
  */
@@ -61,23 +60,22 @@ export const createStore = <
   State,
   ActionOption extends Actions<State>,
   AsyncActionOptions extends AsyncActions<State>,
-  SelectFn extends (state: store<Name, State>) => ReturnType<SelectFn>,
+  SelectFn extends (state: Store<Name, State>) => ReturnType<SelectFn>,
 >(
   options: StoreOptions<State, Name, ActionOption, AsyncActionOptions>,
 ): {
   useStore: <StoreSelect extends SelectFn>(
     select: StoreSelect,
-    equalFn?: EqualityFn<store<Name, State>>,
+    equalFn?: EqualityFn<Store<Name, State>>,
   ) => ReturnType<StoreSelect>;
   actions: StoreActions<ActionOption, ActionTypes.sync>;
   asyncActions: StoreActions<AsyncActionOptions, ActionTypes.async>;
-  store: store<Name, State>;
+  store: Store<Name, State>;
 } => {
-  const store = { [options.name]: options.initialState } as store<Name, State>;
-  const stateListeners: StateListeners<store<Name, State>> = new Map();
+  //
+  const store = { [options.name]: options.initialState } as Store<Name, State>;
+  const stateListeners: StateListeners<Store<Name, State>> = new Map();
 
-  // Construct the hooks that are use to retrieve the
-  // state and actions.
   const actions = createActions(
     options.actions || ({} as ActionOption),
     store,
@@ -97,10 +95,13 @@ export const createStore = <
 };
 
 /**
- * Create a custom hook that can be used inside functions to
+ * Creates a custom hook that can be used inside react components to
  * retrieve the store state.
+ *
+ * @param store The store the hooks is accessing.
+ * @param stateListeners Listeners associated with the store.
  */
-export const createUseStoreHook = <StoreState extends store>(
+export const createUseStoreHook = <StoreState extends Store>(
   store: StoreState,
   stateListeners: StateListeners<StoreState>,
 ): (<SelectFn extends (state: StoreState) => ReturnType<SelectFn>>(
@@ -113,10 +114,9 @@ export const createUseStoreHook = <StoreState extends store>(
    * @param select Function that takes the store state as the argument
    * and can be use to narrow down the value returned.
    *
-   * @param equalFn Function that is called when the store state updates.
-   * The new state and the old state is passed in as arguments. Can be
-   * use to decide whether to trigger local state update and rerender the
-   * component.
+   * @param equalFn Function that is called when the store updates. Use
+   * to decide if the local state should be updated as well. The new state
+   * and the old state are available as the first and second param.
    */
   const useStoreSelect = <T extends (state: StoreState) => ReturnType<T>>(
     select: T,
@@ -125,8 +125,9 @@ export const createUseStoreHook = <StoreState extends store>(
     const [storeState, setStoreState] = useState<StoreState>(
       JSON.parse(JSON.stringify(store)),
     );
-    // Use the setState function as the listener for store changes
-    // and trigger rerenders.
+
+    // Add the setState function and the equalFn to the store to trigger
+    // updates and rerender the component.
     if (!stateListeners.has(setStoreState)) {
       stateListeners.set(setStoreState, {
         setState: setStoreState,
@@ -144,33 +145,31 @@ export const createUseStoreHook = <StoreState extends store>(
 };
 
 /**
- * Turns the user functions defined at store creation into actions
- * use to interact with the store state.
+ * Creates actions for interacting with a store.
  *
- * For async actions, isAsync must be set to true.
+ * @param actions The actions defined when creating the store.
+ * @param store The store associated with the actions.
+ * @param stateName the name of the state, defined when creating
+ * the store.
+ * @param stateListeners Listeners listening for updates on
+ * the store.
+ * @param actionType The type of actions, sync or async.
+ * @returns Object containing the actions.
  */
 export const createActions = <
   UserDefinedActions extends Actions,
   Name extends string,
 >(
   actions: UserDefinedActions,
-  store: store,
-  storeName: Name,
-  stateListeners: StateListeners<store>,
+  store: Store,
+  stateName: Name,
+  stateListeners: StateListeners<Store>,
   actionType: ActionTypes = ActionTypes.sync,
 ): StoreActions<UserDefinedActions, typeof actionType> => {
   const result = {} as StoreActions<UserDefinedActions, typeof actionType>;
 
-  /**
-   * Helper function for updating the store with a new state.
-   * @param newStateValue values for updating the store.
-   */
-  const updateStoreHelper = (newState: store[Name]) => {
-    const newStore = {
-      [storeName]: newState,
-    } as store;
-    updateLocalStates(store, newStore, stateListeners);
-    store[storeName] = newState;
+  const updateStoreWrapper = (newState: Store[Name]) => {
+    updateStateHelper(newState, store, stateName, stateListeners);
   };
 
   /**
@@ -185,10 +184,10 @@ export const createActions = <
      */
     result[key] = (...payload: unknown[]) => {
       if (actionType === ActionTypes.async) {
-        actions[key](updateStoreHelper, store[storeName], ...payload);
+        actions[key](updateStoreWrapper, store[stateName], ...payload);
       } else {
-        const newStateValue = actions[key](store[storeName], ...payload);
-        updateStoreHelper(newStateValue);
+        const newStateValue = actions[key](store[stateName], ...payload);
+        updateStoreWrapper(newStateValue);
       }
     };
   }
@@ -196,26 +195,33 @@ export const createActions = <
 };
 
 /**
- * Helper for calling the local states when the
- * state on the store changes.
- * @param oldStore current store state.
- * @param newStore new state the store is being updated to.
- * @param stateListeners list of listeners.
+ *
+ * @param newState New state of the store
+ * @param store Store to be updated
+ * @param stateName Name of the state.
+ * @param stateListeners
  */
-const updateLocalStates = (
-  oldStore: store,
-  newStore: store,
-  stateListeners: StateListeners<store>,
+const updateStateHelper = <Name extends string>(
+  newState: Store[Name],
+  store: Store,
+  stateName: Name,
+  stateListeners: StateListeners<Store>,
 ) => {
+  const newStore = {
+    [stateName]: newState,
+  } as Store;
+
+  // Checks to see if the new store state meets
+  // the update conditions set by the component before
+  // updating the component.
   stateListeners.forEach((listener) => {
-    // Check if new store state meets conditions for
-    // each local state before updating that local state.
     if (listener.equalFn) {
-      if (listener.equalFn(newStore, oldStore)) {
+      if (listener.equalFn(newStore, store)) {
         listener.setState(newStore);
       }
     } else {
       listener.setState(newStore);
     }
   });
+  store[stateName] = newState;
 };

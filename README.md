@@ -19,14 +19,13 @@ through the `useStore` hook, the state is selected through `state.< name >`.
 
 When defining `actions` the first param is the state, any additional
 param can be included for passing in additional data when the `action`
-is called. After the store is created the state param for actions is 
-hidden and only the user defined ones are exposed. See below for 
-async actions.
+is called. After the store is created the default params are hidden and only 
+the user defined ones will be exposed.
 
 When updating a state, a new state must be returned instead of mutating
 the existing one.
 
-To use type with TS, just defined them as needed when creating the store.
+To use types with TS, just defined them as needed when creating the store.
 
 ```ts
 import {createStore} from './barebone'
@@ -41,21 +40,23 @@ export const {useStore, actions, store} = createStore({
       ...state,
       count: state.count + one + two,
     }),
-    reset: () => ({count: 0})
+    reset: () => ({ count: 0 })
   },
 });
 
-// The signature of addMultiple becomes
-(one: number, two: number) => void
-// when imported from the store.
+...
+
+// To use the addMultiple action:
+actions.addMultiple(2, 3);
+
 ```
 ## Async Actions
 
-To use async actions, add them under `asyncActions` when creating the
-store. Unlike synchronous actions where the new state is returned, for async
-actions the new state needs to be pass to the `setState` helper which
-is the first param in an async action. Async actions is available under
-the `asyncActions` property after creating the store.
+For async actions, add them under `asyncActions` when creating the store.
+Unlike synchronous actions where a new state is returned, async actions 
+accepts a `setState` function as the first param, the new state needs to 
+be pass to `setState` when updating the store. The state is instead the
+second param.
 
 ```ts
 import {createStore} from './barebone'
@@ -73,9 +74,11 @@ export const {useStore, asyncActions, store} = createStore({
   }
 });
 
-// Signature of setCounterAsync becomes
-(url: string) => Promise<void>
-// when imported from the store.
+...
+
+// To use the setCounterAsync action:
+asyncActions.setCounterAsync('my url');
+
 ```
 ## Using the store
 Import the hook and actions from where the store is defined.`useStore` 
@@ -98,6 +101,9 @@ const Counter = () => {
     <button onClick={counterActions.increment}>
           count is {count}
     </button>
+
+    <input type="text"  />
+
     ...
   )
 }
