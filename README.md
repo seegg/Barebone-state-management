@@ -5,7 +5,8 @@ Simple React state management using hooks and with typing for TS.
 a simple counter shared between sibling components.
 
 ## Creating the store
-The `createStore` function returns an object
+The `createStore` function returns an object containing all the items needed
+for accessing and manipulating the state that was pass to it.
 ```ts
 const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
 ```
@@ -55,8 +56,7 @@ actions.addMultiple(2, 3);
 For async actions, add them under `asyncActions` when creating the store.
 Unlike synchronous actions where a new state is returned, async actions 
 accepts a `setState` function as the first param, the new state needs to 
-be pass to `setState` when updating the store. The state is instead the
-second param.
+be pass to `setState` when updating the store.
 
 ```ts
 import {createStore} from './barebone'
@@ -86,6 +86,10 @@ accepts a select function that has the store as the first param which
 can be use to narrow down the return value for the hook.
 
 Actions are not restricted to react components and can be use anywhere.
+
+To access the store outside of components, it can be access through the
+`store` property after creating the store.
+
 ```ts
 import {useCounterStore, counterActions} from './counterStore'
 
