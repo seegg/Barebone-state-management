@@ -200,10 +200,15 @@ export type useActionsHook<SelectFn extends (...args: any) => any> = (
 /** The state of the store */
 export type Store<Name extends string = string, S = any> = { [key in Name]: S };
 
+export type UseStoreHook<Store, SelectFn extends (state: Store) => any> = (
+  select: SelectFn,
+  equalFn?: EqualityFn<Store>,
+) => ReturnType<SelectFn>;
+
 export type CreateStoreResult<
   State,
   Name extends string,
-  SelectFn extends (state: Store<Name, State>) => ReturnType<SelectFn>,
+  SelectFn extends (state: Store<Name, State>) => any,
   ActionOption extends Actions<State>,
   AsyncActionOption extends AsyncActions<State>,
 > = {

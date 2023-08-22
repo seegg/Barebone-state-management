@@ -8,6 +8,7 @@ import type {
   StoreActions,
   AsyncActions,
   CreateStoreResult,
+  UseStoreHook,
 } from './types';
 import { ActionTypes } from './types';
 
@@ -101,13 +102,13 @@ export const createStore = <
  * @param store The store the hooks is accessing.
  * @param stateListeners Listeners associated with the store.
  */
-export const createUseStoreHook = <StoreState extends Store>(
+export const createUseStoreHook = <
+  StoreState extends Store,
+  SelectFn extends (state: StoreState) => ReturnType<SelectFn>,
+>(
   store: StoreState,
   stateListeners: StateListeners<StoreState>,
-): (<SelectFn extends (state: StoreState) => ReturnType<SelectFn>>(
-  select: SelectFn,
-  equalFn?: EqualityFn<StoreState>,
-) => ReturnType<SelectFn>) => {
+): UseStoreHook<StoreState, SelectFn> => {
   /**
    * A Hook use for accessing the state of the store.
    *
