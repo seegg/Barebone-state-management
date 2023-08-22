@@ -1,5 +1,5 @@
 # [Barebone](src/barebone)
-Simple React state management using hooks and with typing for TS.
+Simple React state management using hooks and typing for TS.
 
 [Demo](https://seegg.github.io/barebone-demo/) using
 a simple counter shared between sibling components.
@@ -26,7 +26,7 @@ the existing one.
 To use types with TS, just defined them as needed when creating the store.
 
 ```ts
-import {createStore} from './barebone'
+import {createStore} from 'barebone'
 
 export const {useStore, actions, store} = createStore({
   name: 'counter',
@@ -93,8 +93,8 @@ import {useCounterStore, counterActions} from './counterStore'
 const Counter = () => {
   const count = useCounterStore(state => state.counter.count);
 
-  const setCountTo = (value: number) => {
-    counterActions.setCounterTo(value);
+  const setCountTo10 = () => {
+    counterActions.setCounterTo(10);
   }
 
   return(
@@ -103,7 +103,9 @@ const Counter = () => {
           count is {count}
     </button>
 
-    <input type="text"  />
+    <button onClick={setCountTo10} >
+          set counter to 10
+    </button>
 
     ...
   )
@@ -122,8 +124,7 @@ updated or not.
 
 If no function is defined, the default behaviour for the check is to do
 a strict comparison `===` between the old state and the new state using the
-same state property as the one returned from `useStore` using the select
-function.
+same property as the one returned from `useStore`.
 
 ```ts
 const Counter = () => {
