@@ -10,10 +10,28 @@ for accessing and manipulating the state that was pass to it.
 ```ts
 const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
 ```
-`useStore` is for accessing the store inside of a React component. 
 
-The `name` option is use to identify the store. To access the state values use
-`state.<name>`.
+`createStore` accepts a `storeOptions` object:
+
+```ts
+// storeOptions:
+{
+  /**
+   * Name associated with the store. The state values are access through
+   * a property that is the same as this value. 
+  */
+  name: string;
+  /** The initial state, it can be any value. */
+  initialState: State;
+  /** Synchronous actions. Must return a new state.*/
+  actions: (state: State, ...args: unknown[]) => State
+  /** Async actions. New states are passed */
+  asyncActions: (setState: (state: State) => State, state: State, ...args: unknown[]) => Promise<void>
+}1
+```
+
+After creating the store, the state values can be accessed through 
+`store.<name>` 
 
 When defining `actions` the first param is the state, any additional
 param can be included for passing in additional data when the `action`
@@ -91,7 +109,7 @@ To access the store outside of components, it can be access through the
 import {useCounterStore, counterActions} from './counterStore'
 
 const Counter = () => {
-  const count = useCounterStore(state => state.counter.count);
+  const count = useCounterStore(store => store.counter.count);
 
   const setCountTo10 = () => {
     counterActions.setCounterTo(10);
@@ -117,8 +135,8 @@ The `useStore` hook also accepts an additional function to check if the local
 state should be updated when the store is updated. This can be use to avoid 
 unnecessary rerenders.
 
-The check is done when the store is updating. The new state and
-the old state is pass into the function as the first and second argument.
+The check is done when the store is updating. The new store state and
+the current state is pass into the function as the first and second argument.
 It returns a boolean indicating whether the local state should be
 updated or not.
 
@@ -130,19 +148,19 @@ same property as the one returned from `useStore`.
 const Counter = () => {
   // Default bahaviour
   const count = useCounterStore(
-    state => state.counter.count,
-    (newState, oldState) => newState.counter.count !== oldState.counter.count
+    store => store.counter.count,
+    (newStore, currentStore) => newState.counter.count !== oldState.counter.count
   );
   
   // Only update the local count if the store count is bigger by at least 3.
   const count = useCounterStore(
-    state => state.counter.count,
-    (newState) => newState.counter.count - count > 3
+    store => store.counter.count,
+    (newStore) => newStore.counter.count - count > 3
   );
 
- // Update the local state every time the store updates.
+ // Update the local state any time the store updates.
   const count = useCounterStore(
-    state => state.counter.count,
+    Store => Store.counter.count,
     () => true
   );
 }
