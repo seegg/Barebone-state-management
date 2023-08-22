@@ -117,7 +117,7 @@ export type RemoveFirstNItem<
   T extends unknown[] = [],
 > = T['length'] extends N
   ? Target
-  : T['length'] extends 0
+  : Target['length'] extends 0
   ? never
   : Target extends [infer M, ...infer Rest]
   ? RemoveFirstNItem<Rest, N, [M, ...T]>

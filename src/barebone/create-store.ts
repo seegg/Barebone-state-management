@@ -14,7 +14,7 @@ import { ActionTypes } from './types';
  * Creates a store for keeping track and manipulating a state
  * that's pass to it.
  *
- * @param options.name The name for the store.
+ * @param options.name The name associated with the store.
  * @param options.initialState Value of the initial state.
  * @param options.actions Optional, actions for interacting with the state.
  * The first param of an action function is the state and it accepts
@@ -27,11 +27,11 @@ import { ActionTypes } from './types';
  * as the first param which accepts the new state as the argument updates the store.
  * The second param is now the state.
  *
- * @returns \{useStore, actions, asyncActions, store}
+ * @returns { useStore, actions, asyncActions, store }
  *
  *
  * @example
- * const {useStore, actions, asyncActions} = createStore(
+ * const { useStore, actions, asyncActions, store } = createStore(
  *  {
  *    name: 'counter', initialState: { count: 0 },
  *    actions: {
@@ -123,6 +123,8 @@ export const createUseStoreHook = <StoreState extends Store>(
     select: T,
     equalFn?: EqualityFn<StoreState>,
   ): ReturnType<T> => {
+    // Serialise a local copy so changes to the main store wont be reflected
+    // when component rerenders unless it's requested.
     const [storeState, setStoreState] = useState<StoreState>(
       JSON.parse(JSON.stringify(store)),
     );
@@ -217,9 +219,8 @@ const updateStateHelper = <Name extends string>(
     [stateName]: newState,
   } as Store;
 
-  // Checks to see if the new store state meets
-  // the update conditions set by the component before
-  // updating the component.
+  // Check to see if the new state meets the update requirements
+  // set by the component before updating.
   stateListeners.forEach((listener) => {
     if (listener.equalFn) {
       if (listener.equalFn(newStore, store)) {
