@@ -187,16 +187,6 @@ export type StoreActions<
     : ProcessAsyncAction<ActionsCollection[key], AsyncParamCount>;
 };
 
-/**
- * Type for the function to retrieving actions from the store.
- *
- * Uses the type of the select function that is accepted by
- * the actions function to get the final return type.
- */
-export type useActionsHook<SelectFn extends (...args: any) => any> = (
-  select: SelectFn,
-) => ReturnType<SelectFn>;
-
 /** The state of the store */
 export type Store<Name extends string = string, S = any> = { [key in Name]: S };
 
