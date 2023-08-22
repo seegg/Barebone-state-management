@@ -7,6 +7,7 @@ import type {
   EqualityFn,
   StoreActions,
   AsyncActions,
+  CreateStoreResult,
 } from './types';
 import { ActionTypes } from './types';
 
@@ -64,15 +65,13 @@ export const createStore = <
   SelectFn extends (state: Store<Name, State>) => ReturnType<SelectFn>,
 >(
   options: StoreOptions<State, Name, ActionOption, AsyncActionOptions>,
-): {
-  useStore: <StoreSelect extends SelectFn>(
-    select: StoreSelect,
-    equalFn?: EqualityFn<Store<Name, State>>,
-  ) => ReturnType<StoreSelect>;
-  actions: StoreActions<ActionOption, ActionTypes.sync>;
-  asyncActions: StoreActions<AsyncActionOptions, ActionTypes.async>;
-  store: Store<Name, State>;
-} => {
+): CreateStoreResult<
+  State,
+  Name,
+  SelectFn,
+  ActionOption,
+  AsyncActionOptions
+> => {
   //
   const store = { [options.name]: options.initialState } as Store<Name, State>;
   const stateListeners: StateListeners<Store<Name, State>> = new Map();

@@ -199,3 +199,34 @@ export type useActionsHook<SelectFn extends (...args: any) => any> = (
 
 /** The state of the store */
 export type Store<Name extends string = string, S = any> = { [key in Name]: S };
+
+export type CreateStoreResult<
+  State,
+  Name extends string,
+  SelectFn extends (state: Store<Name, State>) => ReturnType<SelectFn>,
+  ActionOption extends Actions<State>,
+  AsyncActionOption extends AsyncActions<State>,
+> = {
+  /**
+   * Hook use for accessing the store.
+   * @param select Function that accepts the store state as argument
+   * and can be use to narrow down what is returned from the store.
+   * @param equalFn Optional function to determine if the local state
+   * should be updated when the store updates.
+   * @returns The property selected in the select function.
+   */
+  useStore: <StoreSelect extends SelectFn>(
+    select: StoreSelect,
+    equalFn?: EqualityFn<Store<Name, State>>,
+  ) => ReturnType<StoreSelect>;
+  /**
+   * Actions for performing synchronous updates on the store.
+   */
+  actions: StoreActions<ActionOption, ActionTypes.sync>;
+  /**
+   * Actions for performing asynchronous updates on the store.
+   */
+  asyncActions: StoreActions<AsyncActionOption, ActionTypes.async>;
+  /** The store. Don't update the state here directly, use actions. */
+  store: Store<Name, State>;
+};
