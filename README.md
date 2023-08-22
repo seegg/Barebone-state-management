@@ -7,6 +7,9 @@ a simple counter shared between sibling components.
 ## Creating the store
 The `createStore` function returns an object containing all the items needed
 for accessing and manipulating the state that was pass to it.
+
+To use types with TS, just defined them as needed when creating the store.
+
 ```ts
 const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
 ```
@@ -48,7 +51,6 @@ the user defined ones will be exposed. See the next section for `async actions`.
 When updating a state, a new state must be returned instead of mutating
 the existing one.
 
-To use types with TS, just defined them as needed when creating the store.
 
 ```ts
 import {createStore} from 'barebone'

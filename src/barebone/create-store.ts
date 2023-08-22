@@ -9,6 +9,7 @@ import type {
   AsyncActions,
 } from './types';
 import { ActionTypes } from './types';
+
 /**
  * Creates a store for keeping track and manipulating a state
  * that's pass to it.
@@ -172,39 +173,35 @@ export const createActions = <
     updateStateHelper(newState, store, stateName, stateListeners);
   };
 
+  /**
+   * Use for creating async and sync actions. Wraps the actions in a
+   * function where the default params are hidden with only the user
+   * defined payload being exposed.
+   *
+   * @param key The property name of the actions.
+   */
   const createActionHelper = (key: keyof UserDefinedActions) => {
     if (actionType === ActionTypes.async) {
       const asyncAction = async (...payload: unknown[]) => {
         await actions[key](updateStoreWrapper, store[stateName], ...payload);
-        return store[stateName];
       };
       return asyncAction;
     }
 
     const syncAction = (...payload: unknown[]) => {
       updateStoreWrapper(actions[key](store[stateName], ...payload));
-      return store[stateName];
     };
     return syncAction;
   };
 
-  /**
-   * Take each of the actions defined in during store creation and
-   * use a wrapper to hide the store state, this way only the params
-   * defined by the user will be available on the actions after the
-   * store has been created.
-   */
   for (const key in actions) {
-    /**
-     * @param payload user defined params from storeOptions in `createStore`.
-     */
     result[key] = createActionHelper(key);
   }
   return result;
 };
 
 /**
- *
+ * Use for updating the store and local states.
  * @param newState New state of the store
  * @param store Store to be updated
  * @param stateName Name of the state.
