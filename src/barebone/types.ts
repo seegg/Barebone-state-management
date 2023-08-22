@@ -71,16 +71,20 @@ export enum ActionTypes {
  * Type for user defined functions to manipulate the state.
  */
 export interface Actions<State = any> {
-  [key: string]: (state: State, ...payload: any[]) => State;
+  [key: string]: SyncAction<State>;
 }
 
+export type SyncAction<State> = (state: State, ...payload: any[]) => State;
+
 export interface AsyncActions<State = any> {
-  [key: string]: (
-    setState: SetState<State>,
-    state: State,
-    ...payload: any[]
-  ) => Promise<void>;
+  [key: string]: AsyncAction<State>;
 }
+
+export type AsyncAction<State> = (
+  setState: SetState<State>,
+  state: State,
+  ...payload: any[]
+) => Promise<void>;
 
 export type SetState<State> = (state: State) => void;
 

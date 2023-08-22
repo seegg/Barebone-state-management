@@ -33,7 +33,7 @@ const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
     setState: (state: State) => State, 
     state: State, 
     ...args: unknown[]
-    ) => Promise<void>
+    ) => Promise<State>
 }1
 ```
 
@@ -79,6 +79,7 @@ For async actions, add them under `asyncActions` when creating the store.
 Unlike synchronous actions where a new state is returned, async actions 
 accepts a `setState` function as the first param, the new state needs to 
 be pass to `setState` when updating the store.
+
 
 ```ts
 import {createStore} from 'barebone'

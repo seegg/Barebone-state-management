@@ -172,6 +172,22 @@ export const createActions = <
     updateStateHelper(newState, store, stateName, stateListeners);
   };
 
+  const createActionHelper = (key: keyof UserDefinedActions) => {
+    if (actionType === ActionTypes.async) {
+      const asyncAction = async (...payload: unknown[]) => {
+        await actions[key](updateStoreWrapper, store[stateName], ...payload);
+        return store[stateName];
+      };
+      return asyncAction;
+    }
+
+    const syncAction = (...payload: unknown[]) => {
+      updateStoreWrapper(actions[key](store[stateName], ...payload));
+      return store[stateName];
+    };
+    return syncAction;
+  };
+
   /**
    * Take each of the actions defined in during store creation and
    * use a wrapper to hide the store state, this way only the params
@@ -182,14 +198,7 @@ export const createActions = <
     /**
      * @param payload user defined params from storeOptions in `createStore`.
      */
-    result[key] = (...payload: unknown[]) => {
-      if (actionType === ActionTypes.async) {
-        actions[key](updateStoreWrapper, store[stateName], ...payload);
-      } else {
-        const newStateValue = actions[key](store[stateName], ...payload);
-        updateStoreWrapper(newStateValue);
-      }
-    };
+    result[key] = createActionHelper(key);
   }
   return result;
 };
