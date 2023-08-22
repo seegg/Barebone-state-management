@@ -10,18 +10,15 @@ for accessing and manipulating the state that was pass to it.
 ```ts
 const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
 ```
-`useStore` is for accessing the store inside a functional component. 
-`actions` contains functions defined by the user for interacting with 
-the store, both synchronous and asynchronous actions are accessed through
-`actions`.
+`useStore` is for accessing the store inside of a React component. 
 
-The `name` option is use to identify the store, when accessing the store
-through the `useStore` hook, the state is selected through `state.< name >`.
+The `name` option is use to identify the store. To access the state values use
+`state.<name>`.
 
 When defining `actions` the first param is the state, any additional
 param can be included for passing in additional data when the `action`
 is called. After the store is created the default params are hidden and only 
-the user defined ones will be exposed.
+the user defined ones will be exposed. See the next section for `async actions`.
 
 When updating a state, a new state must be returned instead of mutating
 the existing one.
@@ -59,7 +56,7 @@ accepts a `setState` function as the first param, the new state needs to
 be pass to `setState` when updating the store.
 
 ```ts
-import {createStore} from './barebone'
+import {createStore} from 'barebone'
 
 export const {useStore, asyncActions, store} = createStore({
   name: 'counter',
@@ -114,9 +111,9 @@ const Counter = () => {
 
 ```
 ## Conditional updates
-`useStore` also accepts an additional function to check if the local 
-state should be updated when the store is updated. This can be
-use to avoid unnecessary rerenders.
+The `useStore` hook also accepts an additional function to check if the local 
+state should be updated when the store is updated. This can be use to avoid 
+unnecessary rerenders.
 
 The check is done when the store is updating. The new state and
 the old state is pass into the function as the first and second argument.
