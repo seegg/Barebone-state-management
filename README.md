@@ -36,7 +36,7 @@ const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
     setState: (state: State) => State, 
     state: State, 
     ...args: unknown[]
-    ) => Promise<State>
+    ) => Promise<Void>
 }1
 ```
 ## Actions
@@ -79,7 +79,7 @@ export const {useStore, actions, store} = createStore({
 actions.addMultiple(2, 3);
 
 // Composite action:
-const increment2x = ()=>{
+const increment2x = () => {
   actions.increment();
   actions.increment();
 }
