@@ -39,7 +39,7 @@ const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
     ) => Promise<State>
 }1
 ```
-
+## Actions
 After creating the store, the state values can be accessed through 
 `store.<name>` 
 
@@ -50,6 +50,10 @@ the user defined ones will be exposed. See the next section for `async actions`.
 
 When updating a state, a new state must be returned instead of mutating
 the existing one.
+
+If an action depends on the result of another action, instead of using
+one action inside of another it should be compose into a different
+action. This is the same for async actions.
 
 
 ```ts
@@ -73,6 +77,13 @@ export const {useStore, actions, store} = createStore({
 
 // To use the addMultiple action:
 actions.addMultiple(2, 3);
+
+// Composite action:
+const increment2x = ()=>{
+  actions.increment();
+  actions.increment();
+}
+
 
 ```
 ## Async Actions
