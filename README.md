@@ -25,8 +25,15 @@ const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
   initialState: State;
   /** Synchronous actions. Must return a new state.*/
   actions: (state: State, ...args: unknown[]) => State
-  /** Async actions. New states are passed */
-  asyncActions: (setState: (state: State) => State, state: State, ...args: unknown[]) => Promise<void>
+  /** 
+   * Async actions. New states are passed to setState instead of being 
+   * returned.
+  */
+  asyncActions: (
+    setState: (state: State) => State, 
+    state: State, 
+    ...args: unknown[]
+    ) => Promise<void>
 }1
 ```
 
