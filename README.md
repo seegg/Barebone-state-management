@@ -1,8 +1,8 @@
 # [Barebone](src/barebone)
-Simple React state management using hooks and typing for TS.
+Simple and easy to use React state management using hooks and typing for TS.
 
-[Demo](https://seegg.github.io/barebone-demo/) using
-a simple counter shared between sibling components.
+### [Demo](https://seegg.github.io/barebone-demo/) 
+using a simple counter shared between sibling components.
 
 ## Creating the store
 The `createStore` function returns an object containing all the items needed
@@ -59,9 +59,18 @@ function. This is the same for async actions.
 ```ts
 import {createStore} from 'barebone'
 
+// Optional step if you want to explicitly assign a type to the state.
+interface Counter {
+  count: number;
+}
+
+const initialState: Counter = {
+  count: 0
+}
+
 export const {useStore, actions, store} = createStore({
   name: 'counter',
-  initialState: { count: 0 },
+  initialState,
   actions: {
     increment: (state) => ({ count: state.count + 1 }),
     setCounterTo: (state, value: number) => ({ ...state, count: value }),
