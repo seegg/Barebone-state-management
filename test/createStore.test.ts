@@ -29,7 +29,6 @@ describe('createStore()', () => {
         setCounterValue: (state, value: number) => ({ ...state, value }),
       },
     });
-
     it('Selects the correct properties from the store', () => {
       /** Value from the store. */
       const expected = store.test.value;
@@ -68,13 +67,13 @@ describe('createStore()', () => {
         );
       });
 
-      // Update the store a value that fails the check.
+      // Set a value that fails the check.
       act(() => actions.setCounterValue(3));
 
       expect(result.current).not.toEqual(store.test.value);
       expect(result.current).toEqual(oldValue);
 
-      // Set a value to passes the check.
+      // Set a value that passes the check.
       act(() => actions.setCounterValue(15));
       expect(result.current).toEqual(store.test.value);
     });

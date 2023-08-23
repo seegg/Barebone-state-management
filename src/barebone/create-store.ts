@@ -174,14 +174,14 @@ const defaultStoreUpdateCheck = <SelectFnResult>(
 /**
  * Creates actions for interacting with a store.
  *
- * @param actions The actions defined when creating the store.
+ * @param actions The functions for interacting with the store.
  * @param store The store associated with the actions.
  * @param stateName the name of the state, defined when creating
  * the store.
- * @param stateListeners Listeners listening for updates on
- * the store.
+ * @param stateListeners Listeners from useStore hooks that's
+ * connected to the store.
  * @param actionType The type of actions, sync or async.
- * @returns Object containing the actions.
+ * @returns A set of actions based on the input functions.
  */
 export const createActions = <
   UserDefinedActions extends Actions,
@@ -200,9 +200,8 @@ export const createActions = <
   };
 
   /**
-   * Use for creating async and sync actions. Wraps the actions in a
-   * function where the default params are hidden with only the user
-   * defined payload being exposed.
+   * Use for creating async and sync actions. Hides the default params
+   * with a wrapper function and only expose the user defined params.
    *
    * @param key The property name of the actions.
    */
