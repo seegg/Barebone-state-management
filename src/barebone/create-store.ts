@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type {
   Actions,
   StoreOptions,
@@ -131,16 +131,24 @@ export const createUseStoreHook = <
 
     // Add the setState function and the equalFn to the store to trigger
     // updates and rerender the component.
-    if (!stateListeners.has(setStoreState)) {
-      stateListeners.set(setStoreState, {
-        setState: setStoreState,
-        // If not update check callback is provided, compare current state
-        // with new state by default to decide if rerender or not.
-        equalFn:
-          equalFn ||
-          ((newState, oldState) => select(oldState) !== select(newState)),
-      });
-    }
+    useEffect(() => {
+      const listenerKey = setStoreState;
+      if (!stateListeners.has(listenerKey)) {
+        stateListeners.set(listenerKey, {
+          setState: setStoreState,
+          // If not update check callback is provided, compare current state
+          // with new state by default to decide if rerender or not.
+          equalFn:
+            equalFn ||
+            ((newState, oldState) => select(oldState) !== select(newState)),
+        });
+      }
+      // Remove the listener from the store when component unmounts.
+      return () => {
+        stateListeners.delete(listenerKey);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return select(storeState);
   };
 
