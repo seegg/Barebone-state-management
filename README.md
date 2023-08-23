@@ -177,12 +177,19 @@ same property as the one returned from `useStore`.
 ```ts
 const Counter = () => {
   // The default bahaviour. In this example it's checking 
-  // using count property because that is what is returned 
-  // from the hook.
+  // using the count property because that is what is returned 
+  // from the hook. 
   const count = useCounterStore(
     store => store.counter.count,
     (newStore, currentStore) => newState.counter.count !== oldState.counter.count
   );
+
+  // For hooks returning multiple values as an array, the same check
+  // is done for each element if left to the default behaviour.
+  const count = useCounterStore(
+    store => [store.counter.count, store.counter.isUpdating],
+  );
+
   
   // Only update the local count if the store count is bigger by at least 3.
   const count = useCounterStore(

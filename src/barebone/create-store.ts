@@ -140,7 +140,8 @@ export const createUseStoreHook = <
           // with new state by default to decide if rerender or not.
           equalFn:
             equalFn ||
-            ((newState, oldState) => select(oldState) !== select(newState)),
+            ((newState, oldState) =>
+              defaultStoreUpdateCheck(select(oldState), select(newState))),
         });
       }
       // Remove the listener from the store when component unmounts.
@@ -153,6 +154,21 @@ export const createUseStoreHook = <
   };
 
   return useStoreSelect;
+};
+
+const defaultStoreUpdateCheck = <SelectFnResult>(
+  oldStoreResult: SelectFnResult,
+  newStoreResult: SelectFnResult,
+): boolean => {
+  if (Array.isArray(oldStoreResult) && Array.isArray(newStoreResult)) {
+    for (let i = 0; i < oldStoreResult.length; i++) {
+      if (oldStoreResult[i] !== newStoreResult[i]) {
+        return true;
+      }
+      return false;
+    }
+  }
+  return oldStoreResult !== newStoreResult;
 };
 
 /**

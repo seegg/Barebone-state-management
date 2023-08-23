@@ -29,6 +29,7 @@ describe('createStore()', () => {
         setCounterValue: (state, value: number) => ({ ...state, value }),
       },
     });
+
     it('Selects the correct properties from the store', () => {
       /** Value from the store. */
       const expected = store.test.value;
