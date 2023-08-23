@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { createStore } from '../src/barebone';
 
 describe('createStore()', () => {
@@ -78,20 +78,38 @@ describe('createStore()', () => {
       act(() => actions.setCounterValue(15));
       expect(result.current).toEqual(store.test.value);
     });
+
+    it(`Removes listener from the store when component unmounts.`, () => {
+      const mockCheckFn = jest.fn().mockResolvedValue(true);
+
+      const hookResult = renderHook(() =>
+        useStore((store) => store.test.value, mockCheckFn),
+      );
+
+      expect(mockCheckFn).toBeCalledTimes(0);
+
+      // The check function is called when the store updates.
+      act(() => actions.increment());
+      expect(mockCheckFn).toBeCalledTimes(1);
+      hookResult.unmount();
+
+      act(() => actions.increment());
+      expect(mockCheckFn).toBeCalledTimes(1);
+    });
   });
 
   // Test synchronous actions
-  describe('sync actions', () => {
-    it('Should update the store when called', () => {
-      const { actions, store } = createStore({
-        name,
-        initialState,
-        actions: {
-          increment: (state) => ({ ...state, value: state.value + 1 }),
-          setCounterValue: (state, value: number) => ({ ...state, value }),
-        },
-      });
+  describe('synchronous actions', () => {
+    const { useStore, actions, store } = createStore({
+      name,
+      initialState,
+      actions: {
+        increment: (state) => ({ ...state, value: state.value + 1 }),
+        setCounterValue: (state, value: number) => ({ ...state, value }),
+      },
+    });
 
+    it('Should update the store when called', () => {
       const oldValue = store.test.value;
       actions.increment();
       expect(store.test.value).toEqual(oldValue + 1);
@@ -102,15 +120,6 @@ describe('createStore()', () => {
     });
 
     it('Triggers updates on all hooks connected to the store', () => {
-      const { useStore, actions, store } = createStore({
-        name,
-        initialState,
-        actions: {
-          increment: (state) => ({ ...state, value: state.value + 1 }),
-          setCounterValue: (state, value: number) => ({ ...state, value }),
-        },
-      });
-
       const oldValue = store.test.value;
 
       const hook1 = renderHook(() => useStore((store) => store));
@@ -128,6 +137,48 @@ describe('createStore()', () => {
       [hook1, hook2, hook3].forEach(({ result: { current } }) => {
         expect(current.test.value).toEqual(newValue);
       });
+    });
+  });
+
+  // Test asynchronous actions.
+  describe('async actions', () => {
+    const { useStore, asyncActions, store } = createStore({
+      name,
+      initialState,
+      asyncActions: {
+        setCounterValueAsync: async (setState, state, value: number) => {
+          const result = await Promise.resolve(value);
+          setState({ ...state, value: result });
+        },
+      },
+    });
+
+    it('Should update the store when called', async () => {
+      const valueToBeSet = store.test.value + 100000;
+      asyncActions.setCounterValueAsync(valueToBeSet);
+      await waitFor(() => expect(store.test.value).toEqual(valueToBeSet));
+    });
+
+    it('Triggers updates on all hooks connected to the store', async () => {
+      const oldValue = store.test.value;
+
+      const hook1 = renderHook(() => useStore((store) => store));
+      const hook2 = renderHook(() => useStore((store) => store));
+      const hook3 = renderHook(() => useStore((store) => store));
+
+      [hook1, hook2, hook3].forEach(({ result: { current } }) => {
+        expect(current.test.value).toEqual(oldValue);
+      });
+
+      const newValue = oldValue + 10;
+      const assertions: Promise<void>[] = [];
+      await act(() => asyncActions.setCounterValueAsync(newValue));
+      [hook1, hook2, hook3].forEach(({ result: { current } }) => {
+        assertions.push(
+          waitFor(() => expect(current.test.value).toEqual(newValue)),
+        );
+      });
+      await Promise.all(assertions);
     });
   });
 });
