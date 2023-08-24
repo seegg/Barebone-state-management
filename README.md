@@ -27,17 +27,21 @@ const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
   /** The initial state, it can be any value. */
   initialState: State;
   /** Synchronous actions. Must return a new state.*/
-  actions: (state: State, ...args: unknown[]) => State
+  actions: {
+    [key: string]: (state: State, ...args: unknown[]) => State
+    };
   /** 
    * Async actions. New states are passed to setState instead of being 
    * returned.
   */
-  asyncActions: (
-    setState: (state: State) => State, 
-    state: State, 
-    ...args: unknown[]
-    ) => Promise<Void>
-}1
+  asyncActions: {
+    [key: string]: (
+      setState: (state: State) => void,
+      state: State,
+      ...args: unknown[]
+    ) => Promise<Void>;
+  };
+}
 ```
 ## Actions
 After creating the store, the state values can be accessed through 
