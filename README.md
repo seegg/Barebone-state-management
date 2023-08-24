@@ -136,8 +136,7 @@ state in the store. Provide a `select` function to the hook to select
 what is return from the store.
 
 The `useStore` hook will only update the local state if the properties
-it selected changes in the store. [Updating the state.](https://github.
-com/seegg/Barebone-state-management#conditional-updates)
+it selected changes in the store. [Updating the state.](https://github.com/seegg/Barebone-state-management#conditional-updates)
 
 Actions are not restricted to react components and can be use anywhere.
 
