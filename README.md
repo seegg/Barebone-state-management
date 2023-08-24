@@ -5,28 +5,30 @@ Simple and easy to use React state management using hooks and typing for TS.
 using a simple counter shared between sibling components.
 
 ## Creating the store
-The `createStore` function returns an object containing all the items needed
-for accessing and manipulating the state that was pass to it.
+Use the `createStore` function to create a store by passing in a `storeOptions`
+object.
 
-To use types with TS, just defined them as needed when creating the store.
+To use types, just defined them as needed when creating the store.
 
 ```ts
 const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
 ```
 
-`createStore` accepts a `storeOptions` object:
-
 ```ts
 // storeOptions:
 {
   /**
-   * Name associated with the store. The state values are access through
-   * a property that is the same as this value. 
+   * Name associated with the store. The state values are accessed
+   * through store.<name> from either the useStore hook or directly
+   * through the store.
   */
   name: string;
-  /** The initial state, it can be any value. */
+  /** The initial values for the state. */
   initialState: State;
-  /** Synchronous actions. Must return a new state.*/
+  /** 
+   * Synchronous actions use for manipulating the state. Must return
+   * A new state instead of manipulating the existing one.
+  */
   actions: {
     [key: string]: (state: State, ...args: unknown[]) => State
     };
@@ -44,26 +46,20 @@ const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
 }
 ```
 ## Actions
-After creating the store, the state values can be accessed through 
-`store.<name>` 
-
-When defining `actions` the first param is the state, any additional
-params can be included for passing in additional data when the `action`
-is called. After the store is created the default state param on an `action` 
-is hidden and only the user defined params will be exposed.
-
-When updating a state, a new state must be returned instead of mutating
-the existing one.
+When adding synchronous actions to the store the state is made available
+as the first param. Actions can included any additional number of params 
+as needed. After the actions are created, the state param will be hidden.
+To update the store, a new state must be returned instead of
+mutating the existing one.
 
 If an action depends on the result of another action, instead of using
-one action inside of another it should be compose together in an outside
-function. This is the same for async actions.
-
+one action inside of another it should be compose together in wrapper
+outside of the store. This is because the state param does not receive
+any updates.
 
 ```ts
 import {createStore} from 'barebone'
 
-// Optional step if you want to explicitly assign a type to the state.
 interface Counter {
   count: number;
 }
@@ -101,12 +97,11 @@ const increment2x = () => {
 ```
 ## Async Actions
 
-Unsurprisingly async actions are added under the `asyncActions` option 
-when creating the store. While new states are returned in synchronous 
-actions, for async actions new states are pass to a helper function which 
-is available as the first param while defining the action. The store
-state is made available as the second param. Like synchronous actions
-these default params are also hidden after store creation.
+Unsurprisingly async actions are added under `asyncActions`. While 
+new states have to be returned in synchronous actions, in async actions 
+they are pass to a `setState` helper function instead. `setState` and 
+the state is made available as the first and second param when adding
+actions to the store.
 
 ```ts
 import {createStore} from 'barebone'
@@ -115,7 +110,7 @@ export const {useStore, asyncActions, store} = createStore({
   name: 'counter',
   initialState: { count: 0 },
   asyncActions: {
-    // Make a HTTP request to fetch a counter value.
+    // Make a request to fetch a new counter value.
     setCounterAsync: async (setState, state, url: string) => {
       console.log('Fetching new counter.');
       const request = await fetch(url).json();
@@ -132,16 +127,17 @@ asyncActions.setCounterAsync('my url');
 ```
 ## Using the store
 Add the `useStore` hook to any component that needs to access the
-state in the store. Provide a `select` function to the hook to select
-what is return from the store.
+the store. Provide a function that accepts the store as argument
+to `useStore` to select what is returned.
 
-The `useStore` hook will only update the local state if the properties
-it selected changes in the store. [Updating the state.](https://github.com/seegg/Barebone-state-management#conditional-updates)
+`useStore` by default will only update the local state if the properties
+it selected changes in the store. To change this behaviour see 
+[conditional updates.](https://github.com/seegg/Barebone-state-management#conditional-updates)
 
 Actions are not restricted to react components and can be use anywhere.
 
-To access the store outside of a react component, the `store` property 
-from `createStore` is available.
+To access the store outside of a react component, use the `store`
+that was returned as part of `createStore`.
 
 ```ts
 import {useCounterStore, counterActions} from './counterStore'
@@ -170,15 +166,15 @@ const Counter = () => {
 ```
 ## Conditional updates
 The `useStore` hook also accepts an additional function to check if the local 
-state should be updated when the store is updated. This can be use to avoid 
+state should be updated when the store updates. This can be use to avoid 
 unnecessary rerenders.
 
-The check is done during store updates. The new store state and the current
-store state is pass into the function as the first and second argument.
+The new store and the old store is available to this function as the first
+and second argument.
 
-If this function isn't defined, the default behaviour for the check is to do
-a strict comparison `===` between the old state and the new state using the
-same property as the one returned from `useStore`.
+If no function is provided, the default behaviour is to do a strict comparison 
+`===` between the old state and the new state to check if the properties selected
+by `useStore` has changed.
 
 ```ts
 const Counter = () => {
