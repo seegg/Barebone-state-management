@@ -116,7 +116,7 @@ export const {useStore, asyncActions, store} = createStore({
   initialState: { count: 0 },
   asyncActions: {
     // Make a HTTP request to fetch a counter value.
-    setCounterAsync: async (setState, state, url: number) => {
+    setCounterAsync: async (setState, state, url: string) => {
       console.log('Fetching new counter.');
       const request = await fetch(url).json();
       setState({count: request.count});
@@ -131,15 +131,18 @@ asyncActions.setCounterAsync('my url');
 
 ```
 ## Using the store
-Import the hook and actions from where the store is defined.`useStore` 
-accepts a select function that has the store as the first param. the
-`select` function can be use to narrow down the return value for the 
-hook.
+Add the `useStore` hook to any component that needs to access the
+state in the store. Provide a `select` function to the hook to select
+what is return from the store.
+
+The `useStore` hook will only update the local state if the properties
+it selected changes in the store. [Updating the state.](https://github.
+com/seegg/Barebone-state-management#conditional-updates)
 
 Actions are not restricted to react components and can be use anywhere.
 
-To access the store outside of a react component, the `store` property
-is made available for this purpose.
+To access the store outside of a react component, the `store` property 
+from `createStore` is available.
 
 ```ts
 import {useCounterStore, counterActions} from './counterStore'
