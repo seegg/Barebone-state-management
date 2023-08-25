@@ -9,6 +9,7 @@ import type {
   AsyncActions,
   CreateStoreResult,
   UseStoreHook,
+  CreateActionsResult,
 } from './types';
 import { ActionTypes } from './types';
 
@@ -77,23 +78,17 @@ export const createStore = <
   const store = { [options.name]: options.initialState } as Store<Name, State>;
   const stateListeners: StateListeners<Store<Name, State>> = new Map();
 
-  const actions = createActions(
-    options.actions || ({} as ActionOption),
+  const storeActions = createActions(
     store,
     options.name,
     stateListeners,
-    ActionTypes.sync,
+    options.actions,
+    options.asyncActions,
   );
-  const asyncActions = createActions(
-    options.asyncActions || ({} as AsyncActionOptions),
-    store,
-    options.name,
-    stateListeners,
-    ActionTypes.async,
-  );
+
   const useStore = createUseStoreHook(store, stateListeners);
 
-  return { useStore, actions, asyncActions, store };
+  return { useStore, store, ...storeActions };
 };
 
 /**
@@ -177,57 +172,55 @@ const defaultStoreUpdateCheck = <SelectFnResult>(
 };
 
 /**
- * Creates actions for interacting with a store.
+ * Creates actions associated with a store.
  *
- * @param actions The functions for interacting with the store.
  * @param store The store associated with the actions.
  * @param stateName the name of the state, defined when creating
  * the store.
  * @param stateListeners Listeners from useStore hooks that's
  * connected to the store.
- * @param actionType The type of actions, sync or async.
- * @returns A set of actions based on the input functions.
+ * @param actions Synchronous actions.
+ * @param asyncActions Async actions.
+ * @returns Object containing the sync and async actions for the store.
  */
 export const createActions = <
   UserDefinedActions extends Actions,
+  UserDefinedAsyncActions extends AsyncActions,
   Name extends string,
 >(
-  actions: UserDefinedActions,
   store: Store,
   stateName: Name,
   stateListeners: StateListeners<Store>,
-  actionType: ActionTypes = ActionTypes.sync,
-): StoreActions<UserDefinedActions, typeof actionType> => {
-  const result = {} as StoreActions<UserDefinedActions, typeof actionType>;
+  actionsOption?: UserDefinedActions,
+  asyncActionsOption?: UserDefinedAsyncActions,
+): CreateActionsResult<UserDefinedActions, UserDefinedAsyncActions> => {
+  //
+  const actions = {} as StoreActions<UserDefinedActions, ActionTypes.sync>;
+  const asyncActions = {} as StoreActions<
+    UserDefinedAsyncActions,
+    ActionTypes.async
+  >;
 
   const updateStoreWrapper = (newState: Store[Name]) => {
     updateStateHelper(newState, store, stateName, stateListeners);
   };
 
-  /**
-   * Use for creating async and sync actions. Hides the default params
-   * with a wrapper function and only expose the user defined params.
-   *
-   * @param key The property name of the actions.
-   */
-  const createActionHelper = (key: keyof UserDefinedActions) => {
-    if (actionType === ActionTypes.async) {
-      const asyncAction = async (...payload: unknown[]) => {
-        updateStoreWrapper(await actions[key](store[stateName], ...payload));
-      };
-      return asyncAction;
-    }
-
-    const syncAction = (...payload: unknown[]) => {
-      updateStoreWrapper(actions[key](store[stateName], ...payload));
+  // Create the sync actions.
+  for (const key in actionsOption) {
+    actions[key] = (...payload: unknown[]) => {
+      updateStoreWrapper(actionsOption[key](store[stateName], ...payload));
     };
-    return syncAction;
-  };
-
-  for (const key in actions) {
-    result[key] = createActionHelper(key);
   }
-  return result;
+  // Create the async actions.
+  for (const key in asyncActionsOption) {
+    asyncActions[key] = async (...payload: unknown[]) => {
+      updateStoreWrapper(
+        await asyncActionsOption[key](store[stateName], ...payload),
+      );
+    };
+  }
+
+  return { actions, asyncActions };
 };
 
 /**

@@ -188,6 +188,23 @@ export type StoreActions<
 /** The state of the store */
 export type Store<Name extends string = string, S = any> = { [key in Name]: S };
 
+/**
+ * Actions for manipulating the store.
+ */
+export type CreateActionsResult<
+  ActionsSync extends Actions,
+  ActionsAsync extends AsyncActions,
+> = {
+  /**
+   * Actions for performing synchronous updates on the store.
+   */
+  actions: StoreActions<ActionsSync, ActionTypes.sync>;
+  /**
+   * Actions for performing asynchronous updates on the store.
+   */
+  asyncActions: StoreActions<ActionsAsync, ActionTypes.async>;
+};
+
 export type UseStoreHook<Store, SelectFn extends (state: Store) => any> = (
   select: SelectFn,
   equalFn?: EqualityFn<Store>,
@@ -212,14 +229,7 @@ export type CreateStoreResult<
     select: StoreSelect,
     equalFn?: EqualityFn<Store<Name, State>>,
   ) => ReturnType<StoreSelect>;
-  /**
-   * Actions for performing synchronous updates on the store.
-   */
-  actions: StoreActions<ActionOption, ActionTypes.sync>;
-  /**
-   * Actions for performing asynchronous updates on the store.
-   */
-  asyncActions: StoreActions<AsyncActionOption, ActionTypes.async>;
+
   /** The store. Don't update the state here directly, use actions. */
   store: Store<Name, State>;
-};
+} & CreateActionsResult<ActionOption, AsyncActionOption>;
