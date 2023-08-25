@@ -213,7 +213,7 @@ export const createActions = <
   const createActionHelper = (key: keyof UserDefinedActions) => {
     if (actionType === ActionTypes.async) {
       const asyncAction = async (...payload: unknown[]) => {
-        await actions[key](updateStoreWrapper, store[stateName], ...payload);
+        updateStoreWrapper(await actions[key](store[stateName], ...payload));
       };
       return asyncAction;
     }

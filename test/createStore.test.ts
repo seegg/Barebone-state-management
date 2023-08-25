@@ -18,9 +18,7 @@ describe('createStore()', () => {
 
   const name = 'test';
 
-  // Test the useStore hook.
   describe('useStore()', () => {
-    // Create the store for all 'useStore' tests.
     const { useStore, actions, store } = createStore({
       name,
       initialState,
@@ -29,8 +27,8 @@ describe('createStore()', () => {
         setCounterValue: (state, value: number) => ({ ...state, value }),
       },
     });
+
     it('Selects the correct properties from the store', () => {
-      /** Value from the store. */
       const expected = store.test.value;
 
       const { result } = renderHook(() =>
@@ -40,14 +38,14 @@ describe('createStore()', () => {
     });
 
     it('Receives updates from the store', () => {
-      /** Value of store pre increment. */
       const oldValue = store.test.value;
 
       const hookResult = renderHook(() =>
         useStore((store) => store.test.value),
       );
 
-      // Update the store by calling an action.
+      // Update the store by calling an action. and see
+      // that the value from the hook is updated as well.
       act(() => actions.increment());
       const currentValue = store.test.value;
 
@@ -56,13 +54,12 @@ describe('createStore()', () => {
     });
 
     it('Should not update local state unless equality check passes', () => {
-      /** Value of store pre increment. */
       const oldValue = store.test.value;
 
       const { result } = renderHook(() => {
         return useStore(
           (store) => store.test.value,
-          // Don't receive updates unless the new value is a multiple of 5 or 0.
+          // Limit updates to values that are a multiple of 5.
           (newStore) => newStore.test.value % 5 === 0,
         );
       });
@@ -87,7 +84,8 @@ describe('createStore()', () => {
 
       expect(mockCheckFn).toBeCalledTimes(0);
 
-      // The check function is called when the store updates.
+      // The check function shouldn't be called again after
+      // its component has unmounted.
       act(() => actions.increment());
       expect(mockCheckFn).toBeCalledTimes(1);
       hookResult.unmount();
@@ -97,7 +95,8 @@ describe('createStore()', () => {
     });
   });
 
-  // Test synchronous actions
+  // Actions.
+
   describe('synchronous actions', () => {
     const { useStore, actions, store } = createStore({
       name,
@@ -139,15 +138,16 @@ describe('createStore()', () => {
     });
   });
 
-  // Test asynchronous actions.
+  // Asynchronous actions.
+
   describe('async actions', () => {
     const { useStore, asyncActions, store } = createStore({
       name,
       initialState,
       asyncActions: {
-        setCounterValueAsync: async (setState, state, value: number) => {
+        setCounterValueAsync: async (state, value: number) => {
           const result = await Promise.resolve(value);
-          setState({ ...state, value: result });
+          return { ...state, value: result };
         },
       },
     });

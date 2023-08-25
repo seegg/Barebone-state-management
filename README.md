@@ -26,22 +26,17 @@ const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
   /** The initial values for the state. */
   initialState: State;
   /** 
-   * Synchronous actions use for manipulating the state. Must return
+   * Synchronous actions use for manipulating the store. Must return
    * A new state instead of manipulating the existing one.
   */
   actions: {
     [key: string]: (state: State, ...args: unknown[]) => State
     };
   /** 
-   * Async actions. New states are passed to setState instead of being 
-   * returned.
+   * Async actions works the same way as sync actions.
   */
   asyncActions: {
-    [key: string]: (
-      setState: (state: State) => void,
-      state: State,
-      ...args: unknown[]
-    ) => Promise<Void>;
+    [key: string]: (state: State, ...args: unknown[]) => Promise<State>
   };
 }
 ```
@@ -97,11 +92,9 @@ const increment2x = () => {
 ```
 ## Async Actions
 
-Unsurprisingly async actions are added under `asyncActions`. While 
-new states have to be returned in synchronous actions, in async actions 
-they are pass to a `setState` helper function instead. `setState` and 
-the state is made available as the first and second param when adding
-actions to the store.
+Async actions are added under `asyncActions`. It works the same as synchronous 
+actions except with the ability to perform async operations before returning 
+the new state.
 
 ```ts
 import {createStore} from 'barebone'
@@ -111,10 +104,10 @@ export const {useStore, asyncActions, store} = createStore({
   initialState: { count: 0 },
   asyncActions: {
     // Make a request to fetch a new counter value.
-    setCounterAsync: async (setState, state, url: string) => {
+    setCounterAsync: async (state, url: string) => {
       console.log('Fetching new counter.');
       const request = await fetch(url).json();
-      setState({count: request.count});
+      return {...state, count: request.count};
     }
   }
 });

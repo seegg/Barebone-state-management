@@ -46,9 +46,9 @@ export interface StoreOptions<
    * @example
    * {
    *   // Make a HTTP request for a new counter value.
-   *   setCounterAsync: async (setState, state, url: string) => {
+   *   setCounterAsync: async (state, url: string) => {
           const request = await fetch(url).json();
-          setState(request.count);
+          return request.count;
    *   },
    * }
    */
@@ -56,8 +56,8 @@ export interface StoreOptions<
 }
 
 // Number of default params in each type of action.
-type SyncPramCount = 0 | 1;
-type AsyncParamCount = SyncPramCount | 2;
+type SyncDefaultPramCount = 1;
+type AsyncDefaultParamCount = 1;
 
 // different types of actions.
 export enum ActionTypes {
@@ -81,10 +81,9 @@ export interface AsyncActions<State = any> {
 }
 
 export type AsyncAction<State> = (
-  setState: SetState<State>,
   state: State,
   ...payload: any[]
-) => Promise<void>;
+) => Promise<State>;
 
 export type SetState<State> = (state: State) => void;
 
@@ -105,22 +104,21 @@ export type RemoveFirstTwoItem<T extends unknown[]> = T extends [
 /**
  * Remove the first N items on an array.
  *
- * To construct the type, items are removed
- * one at a time from the target array and added
- * to a second array until the length of the second
- * array equals N. Whatever is left in the target
- * array is then returned.
+ * Items are removed from the target array and added to
+ * a second array until either the length of the second
+ * array equals or the target array is empty.
+ *
  */
-export type RemoveFirstNItem<
+export type RemoveFirstNItems<
   Target extends unknown[],
   N extends number,
   T extends unknown[] = [],
-> = T['length'] extends N
+> = Target['length'] extends 0
   ? Target
-  : Target['length'] extends 0
-  ? never
+  : T['length'] extends N
+  ? Target
   : Target extends [infer M, ...infer Rest]
-  ? RemoveFirstNItem<Rest, N, [M, ...T]>
+  ? RemoveFirstNItems<Rest, N, [M, ...T]>
   : never;
 
 /**
@@ -145,7 +143,7 @@ export type ProcessAsyncAction<
   Params extends any[] = Parameters<Action>,
 > = Params['length'] extends N
   ? () => Promise<void>
-  : (...payload: RemoveFirstTwoItem<Params>) => Promise<void>;
+  : (...payload: RemoveFirstItem<Params>) => Promise<void>;
 
 /** Map to keep track of listeners. */
 export type StateListeners<State> = Map<
@@ -183,8 +181,8 @@ export type StoreActions<
   ActionType extends ActionTypes,
 > = {
   [key in keyof ActionsCollection]: ActionType extends ActionTypes.sync
-    ? ProcessedAction<ActionsCollection[key], SyncPramCount>
-    : ProcessAsyncAction<ActionsCollection[key], AsyncParamCount>;
+    ? ProcessedAction<ActionsCollection[key], SyncDefaultPramCount>
+    : ProcessAsyncAction<ActionsCollection[key], AsyncDefaultParamCount>;
 };
 
 /** The state of the store */
