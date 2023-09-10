@@ -33,10 +33,12 @@ const {useStore, actions, asyncActions, store} = createStore({...storeOptions});
     [key: string]: (state: State, ...args: unknown[]) => State
     };
   /** 
-   * Async actions works the same way as sync actions.
+   * Async actions works the same way as sync actions. Except instead
+   * of accessing the state directly, the first param is a function that
+   * returns the state when called.
   */
   asyncActions: {
-    [key: string]: (getState: ()=> State, ...args: unknown[]) => Promise<State>
+    [key: string]: (getState: () => State, ...args: unknown[]) => Promise<State>
   };
 }
 ```
