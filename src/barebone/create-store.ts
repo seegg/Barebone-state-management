@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   Actions,
   StoreOptions,
@@ -125,17 +125,21 @@ export const createUseStoreHook = <
       JSON.parse(JSON.stringify(store)),
     );
 
-    // Add the setState function and the equalFn to the store to trigger
-    // updates and rerender the component.
+    const updateCheckFn = useRef<EqualityFn<StoreState>>();
+    updateCheckFn.current = equalFn;
+
     useEffect(() => {
       const listenerKey = setStoreState;
       if (!stateListeners.has(listenerKey)) {
         stateListeners.set(listenerKey, {
           setState: setStoreState,
-          equalFn:
-            equalFn ||
-            ((newState, oldState) =>
-              defaultStoreUpdateCheck(select(oldState), select(newState))),
+          // If no equalFn is provided use the default one.
+          equalFn: (newState, oldState) => {
+            if (updateCheckFn.current) {
+              return updateCheckFn.current(newState, oldState);
+            }
+            return defaultStoreUpdateCheck(select(oldState), select(newState));
+          },
         });
       }
       // Remove the listener from the store when component unmounts.
@@ -208,6 +212,14 @@ export const createActions = <
     updateStateHelper(newState, store, stateName, stateListeners);
   };
 
+  /**
+   * Getter for the store, to make sure the state is not
+   * stale inside the async actions.
+   */
+  const getStore = () => {
+    return store[stateName];
+  };
+
   // Create the sync actions.
   for (const key in actionsOption) {
     actions[key] = (...payload: unknown[]) => {
@@ -217,9 +229,7 @@ export const createActions = <
   // Create the async actions.
   for (const key in asyncActionsOption) {
     asyncActions[key] = async (...payload: unknown[]) => {
-      updateStoreWrapper(
-        await asyncActionsOption[key](store[stateName], ...payload),
-      );
+      updateStoreWrapper(await asyncActionsOption[key](getStore, ...payload));
     };
   }
 
@@ -248,7 +258,7 @@ const updateStateHelper = <Name extends string>(
   stateListeners.forEach((listener) => {
     if (listener.equalFn) {
       if (listener.equalFn(newStore, store)) {
-        listener.setState(newStore);
+        listener.setState(JSON.parse(JSON.stringify(newStore)));
       }
     } else {
       listener.setState(newStore);

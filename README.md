@@ -91,9 +91,11 @@ const increment2x = () => {
 ```
 ## Async Actions
 
-Async actions are added under `asyncActions`. It works the same as synchronous 
-actions except with the ability to perform async operations before returning 
-the new state.
+Async actions are added under `asyncActions`. Unlike synchronous actions
+the first param for an async action is a function that return the state
+when called. This means that instead of accessing the state directly it
+needs to be through this function call. Other than that both types of 
+actions are the same.
 
 ```ts
 import {createStore} from 'barebone'
@@ -103,10 +105,10 @@ export const {useStore, asyncActions, store} = createStore({
   initialState: { count: 0 },
   asyncActions: {
     // Make a request to fetch a new counter value.
-    setCounterAsync: async (state, url: string) => {
+    setCounterAsync: async (getState: () => State, url: string) => {
       console.log('Fetching new counter.');
       const request = await fetch(url).json();
-      return {...state, count: request.count};
+      return {...getState(), count: request.count};
     }
   }
 });

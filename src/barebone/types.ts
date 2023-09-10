@@ -14,9 +14,9 @@ export interface StoreOptions<
   /** The initial state of the store. */
   initialState: State;
   /**
-   * Functions use for manipulate the store, the first param
-   * is the state and it accepts any number of additional params
-   * for passing in data when the action is called.
+   * Functions use for manipulating the store, the first param
+   * is always the state and it accepts any number of additional
+   * params for passing in data when the action is called.
    *
    * Action functions must return a new state and not
    * just mutating the existing state.
@@ -36,9 +36,10 @@ export interface StoreOptions<
   actions?: UserDefinedActions;
 
   /**
-   * For async actions, the first two params in the function
-   * is a callback function and the state, the callback function
-   * is use to update the store once the new state is ready.
+   * For async actions, the first param instead of being the 
+   * state it's a function that returns the current state when
+   * called. This is so that the latest store state is always
+   * available inside the async function.
    *
    * Async actions accepts any number of additional params
    * for passing in data when the action is called.
@@ -46,7 +47,7 @@ export interface StoreOptions<
    * @example
    * {
    *   // Make a HTTP request for a new counter value.
-   *   setCounterAsync: async (state, url: string) => {
+   *   setCounterAsync: async (getState, url: string) => {
           const request = await fetch(url).json();
           return request.count;
    *   },
@@ -81,7 +82,7 @@ export interface AsyncActions<State = any> {
 }
 
 export type AsyncAction<State> = (
-  state: State,
+  getState: () => State,
   ...payload: any[]
 ) => Promise<State>;
 

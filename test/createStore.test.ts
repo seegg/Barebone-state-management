@@ -145,9 +145,9 @@ describe('createStore()', () => {
       name,
       initialState,
       asyncActions: {
-        setCounterValueAsync: async (state, value: number) => {
+        setCounterValueAsync: async (getState, value: number) => {
           const result = await Promise.resolve(value);
-          return { ...state, value: result };
+          return { ...getState(), value: result };
         },
       },
     });
@@ -156,6 +156,7 @@ describe('createStore()', () => {
       const valueToBeSet = store.test.value + 100000;
       asyncActions.setCounterValueAsync(valueToBeSet);
       await waitFor(() => expect(store.test.value).toEqual(valueToBeSet));
+      expect(store.test.isUpdating).toBe(false);
     });
 
     it('Triggers updates on all hooks connected to the store', async () => {
