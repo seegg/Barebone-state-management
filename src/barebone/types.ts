@@ -87,17 +87,17 @@ export type AsyncAction<State> = (
 
 export type SetState<State> = (state: State) => void;
 
-/** Remove the first item on an array. */
-type RemoveFirstItem<T extends unknown[]> = T extends [any, ...infer U]
+/** Remove the first item on an array.*/
+type RemoveFirstItem<T extends unknown[]> = T['length'] extends 0
+  ? T
+  : T extends [any, ...infer U]
   ? U
   : never;
 
 /** Remove first two items on array. */
-export type RemoveFirstTwoItem<T extends unknown[]> = T extends [
-  any,
-  any,
-  ...infer U,
-]
+export type RemoveFirstTwoItem<T extends unknown[]> = T['length'] extends 0 | 1
+  ? T
+  : T extends [any, any, ...infer U]
   ? U
   : never;
 

@@ -161,14 +161,17 @@ const defaultStoreUpdateCheck = <SelectFnResult>(
   // When the hook select function returns an array, only one
   // element needs to be different.
   if (Array.isArray(oldStoreResult) && Array.isArray(newStoreResult)) {
+    let shouldUpdate = false;
     for (let i = 0; i < oldStoreResult.length; i++) {
       if (oldStoreResult[i] !== newStoreResult[i]) {
-        return true;
+        shouldUpdate = true;
+        break;
       }
-      return false;
     }
+    return shouldUpdate;
+  } else {
+    return oldStoreResult !== newStoreResult;
   }
-  return oldStoreResult !== newStoreResult;
 };
 
 /**
