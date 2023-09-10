@@ -25,10 +25,10 @@ import { ActionTypes } from './types';
  *
  * Actions must return a new state instead of mutating the existing
  * state.
+ *
  * @param options.asyncActions Optional, async actions. Unlike synchronous
- * actions where the new state is returned async actions has a callback function
- * as the first param which accepts the new state as the argument updates the store.
- * The second param is now the state.
+ * actions the state is access through the result of a function call. Other
+ * than that both types of actions works the same way.
  *
  * @returns { useStore, actions, asyncActions, store }
  *
@@ -42,10 +42,10 @@ import { ActionTypes } from './types';
  *      add: (state, amount: number) => ({count: state.count + amount})
  *    },
  *    asyncActions: {
- *      delayedAddToCount: async (setState, state, value: number) => {
- *        const newState = {count: state.count + value};
+ *      delayedAddToCount: async (getState, value: number) => {
+ *        const newState = {count: getState().count + value};
  *        await do some async work...
- *        setState(newState);
+ *        return newState;
  *      }
  *    }
  *  }
