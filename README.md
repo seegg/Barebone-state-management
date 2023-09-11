@@ -1,5 +1,5 @@
 # [Barebone](src/barebone)
-Simple and easy to use React state management using hooks and typing for TS.
+Simple and easy to use state management library for React.
 
 ### [Demo](https://seegg.github.io/barebone-demo/) 
 using a simple counter shared between sibling components.
