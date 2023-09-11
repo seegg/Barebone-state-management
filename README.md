@@ -50,8 +50,7 @@ To update the store, a new state must be returned instead of
 mutating the existing one.
 
 When using multiple actions at the same time, each action will be called
-in the order that it's defined. Any action that follows another will always
-act on the latest store state.
+in the order that it's defined. All actions will act up on the latest store.
 
 ```ts
 import {createStore} from 'barebone'
@@ -83,20 +82,13 @@ export const {useStore, actions, store} = createStore({
 // To use the addMultiple action:
 actions.addMultiple(2, 3);
 
-// Using multiple actions at the same time.
-const increment2x = () => {
-  actions.increment();
-  actions.addMultiple(2, 3);
-}
-
-
 ```
 ## Async Actions
 
 Async actions are added under `asyncActions`. Unlike synchronous actions
 the first param for an async action is a `getState` function that return 
 the state when called. This means that to access the state inside of an 
-async action it's done so through the return value of this `getState` function. 
+async action it's done so through the return value of the `getState` function. 
 Other than that both types of actions works the same way.
 
 
