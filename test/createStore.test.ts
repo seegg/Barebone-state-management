@@ -141,13 +141,26 @@ describe('createStore()', () => {
   // Asynchronous actions.
 
   describe('async actions', () => {
-    const { useStore, asyncActions, store } = createStore({
+    const { useStore, asyncActions, actions, store } = createStore({
       name,
       initialState,
       asyncActions: {
         setCounterValueAsync: async (getState, value: number) => {
           const result = await Promise.resolve(value);
           return { ...getState(), value: result };
+        },
+        asyncAdd: async (getState, value: number) => {
+          const result = await Promise.resolve(value);
+          const state = getState();
+          return { ...state, value: state.value + result };
+        },
+      },
+      actions: {
+        add: (state, value) => {
+          return { ...state, value: state.value + value };
+        },
+        setValue: (state, value) => {
+          return { ...state, value };
         },
       },
     });
@@ -179,6 +192,16 @@ describe('createStore()', () => {
         );
       });
       await Promise.all(assertions);
+    });
+
+    it(`Uses up to date store. i.e. not stale.`, async () => {
+      const expected = 100;
+      actions.setValue(0);
+      asyncActions.asyncAdd(expected - 10);
+      actions.add(10);
+
+      expect(store.test.value).toBe(10);
+      await waitFor(() => expect(store.test.value).toBe(expected));
     });
   });
 });

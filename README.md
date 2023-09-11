@@ -148,7 +148,7 @@ const Counter = () => {
   const count = useCounterStore(store => store.counter.count);
 
   // Selecting multiple properties.
-  const counter = useCounterStore(
+  const [count, isUpdating] = useCounterStore(
     store => [store.counter.count, store.counter.isUpdating],
   );
 
