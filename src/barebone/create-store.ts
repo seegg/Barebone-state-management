@@ -3,7 +3,6 @@ import type {
   Actions,
   StoreOptions,
   Store,
-  StateListeners,
   EqualityFn,
   StoreActions,
   AsyncActions,
@@ -12,6 +11,7 @@ import type {
   CreateActionsResult,
 } from './types';
 import { ActionTypes } from './types';
+import { StateStore } from './state-store';
 
 /**
  * Creates a store for keeping track and manipulating a state
@@ -75,36 +75,31 @@ export const createStore = <
   AsyncActionOptions
 > => {
   //
-  const store = { [options.name]: options.initialState } as Store<Name, State>;
-  const stateListeners: StateListeners<Store<Name, State>> = new Map();
+  const stateStore = new StateStore(options.name, options.initialState);
 
   const storeActions = createActions(
-    store,
-    options.name,
-    stateListeners,
+    stateStore,
     options.actions,
     options.asyncActions,
   );
 
-  const useStore = createUseStoreHook(store, stateListeners);
+  const useStore = createUseStoreHook(stateStore);
 
-  return { useStore, store, ...storeActions };
+  return { useStore, store: stateStore.store, ...storeActions };
 };
 
 /**
  * Creates a custom hook that can be used inside react components to
  * retrieve the store state.
  *
- * @param store The store the hooks is accessing.
- * @param stateListeners Listeners associated with the store.
+ * @param stateStore The store the hooks is accessing.
  */
 export const createUseStoreHook = <
-  StoreState extends Store,
-  SelectFn extends (state: StoreState) => ReturnType<SelectFn>,
+  StoreInstance extends StateStore,
+  SelectFn extends (state: StoreInstance['store']) => ReturnType<SelectFn>,
 >(
-  store: StoreState,
-  stateListeners: StateListeners<StoreState>,
-): UseStoreHook<StoreState, SelectFn> => {
+  stateStore: StoreInstance,
+): UseStoreHook<StoreInstance['store'], SelectFn> => {
   /**
    * A Hook use for accessing the state of the store.
    *
@@ -115,36 +110,34 @@ export const createUseStoreHook = <
    * to decide if the local state should be updated as well. The new state
    * and the old state are available as the first and second param.
    */
-  const useStoreSelect = <T extends (state: StoreState) => ReturnType<T>>(
+  const useStoreSelect = <
+    T extends (state: StoreInstance['store']) => ReturnType<T>,
+  >(
     select: T,
-    equalFn?: EqualityFn<StoreState>,
+    equalFn?: EqualityFn<StoreInstance['store']>,
   ): ReturnType<T> => {
     // Serialise a local copy so changes in the main store wont be reflected
     // locally when component rerenders unless an updated is requested.
-    const [storeState, setStoreState] = useState<StoreState>(
-      JSON.parse(JSON.stringify(store)),
+    const [storeState, setStoreState] = useState<StoreInstance['store']>(
+      JSON.parse(JSON.stringify(stateStore.getStore())),
     );
 
-    const updateCheckFn = useRef<EqualityFn<StoreState>>();
+    const updateCheckFn = useRef<EqualityFn<StoreInstance['store']>>();
     updateCheckFn.current = equalFn;
 
     useEffect(() => {
-      const listenerKey = setStoreState;
-      if (!stateListeners.has(listenerKey)) {
-        stateListeners.set(listenerKey, {
-          setState: setStoreState,
-          // If no equalFn is provided use the default one.
-          equalFn: (newState, oldState) => {
-            if (updateCheckFn.current) {
-              return updateCheckFn.current(newState, oldState);
-            }
-            return defaultStoreUpdateCheck(select(oldState), select(newState));
-          },
-        });
-      }
+      const unsubscribe = stateStore.subscribe(
+        setStoreState,
+        (newState, oldState) => {
+          if (updateCheckFn.current) {
+            return updateCheckFn.current(newState, oldState);
+          }
+          return defaultStoreUpdateCheck(select(oldState), select(newState));
+        },
+      );
       // Remove the listener from the store when component unmounts.
       return () => {
-        stateListeners.delete(listenerKey);
+        unsubscribe && unsubscribe();
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -179,13 +172,7 @@ const defaultStoreUpdateCheck = <SelectFnResult>(
 };
 
 /**
- * Creates actions associated with a store.
- *
- * @param store The store associated with the actions.
- * @param stateName the name of the state, defined when creating
- * the store.
- * @param stateListeners Listeners from useStore hooks that's
- * connected to the store.
+ * @param stateStore Object keeping track of state and listeners.
  * @param actions Synchronous actions.
  * @param asyncActions Async actions.
  * @returns Object containing the sync and async actions for the store.
@@ -193,11 +180,9 @@ const defaultStoreUpdateCheck = <SelectFnResult>(
 export const createActions = <
   UserDefinedActions extends Actions,
   UserDefinedAsyncActions extends AsyncActions,
-  Name extends string,
+  StoreInstance extends StateStore,
 >(
-  store: Store,
-  stateName: Name,
-  stateListeners: StateListeners<Store>,
+  stateStore: StoreInstance,
   actionsOption?: UserDefinedActions,
   asyncActionsOption?: UserDefinedAsyncActions,
 ): CreateActionsResult<UserDefinedActions, UserDefinedAsyncActions> => {
@@ -208,61 +193,25 @@ export const createActions = <
     ActionTypes.async
   >;
 
-  const updateStoreWrapper = (newState: Store[Name]) => {
-    updateStateHelper(newState, store, stateName, stateListeners);
-  };
-
-  /**
-   * Getter for the store, to make sure the state is not
-   * stale inside the async actions.
-   */
-  const getStore = () => {
-    return store[stateName];
-  };
-
   // Create the sync actions.
   for (const key in actionsOption) {
     actions[key] = (...payload: unknown[]) => {
-      updateStoreWrapper(actionsOption[key](store[stateName], ...payload));
+      stateStore.updateState(
+        actionsOption[key](stateStore.getState(), ...payload),
+      );
     };
   }
   // Create the async actions.
   for (const key in asyncActionsOption) {
     asyncActions[key] = async (...payload: unknown[]) => {
-      updateStoreWrapper(await asyncActionsOption[key](getStore, ...payload));
+      stateStore.updateState(
+        await asyncActionsOption[key](
+          stateStore.getState.bind(stateStore),
+          ...payload,
+        ),
+      );
     };
   }
 
   return { actions, asyncActions };
-};
-
-/**
- * Use for updating the store and local states.
- * @param newState New state of the store
- * @param store Store to be updated
- * @param stateName Name of the state.
- * @param stateListeners
- */
-const updateStateHelper = <Name extends string>(
-  newState: Store[Name],
-  store: Store,
-  stateName: Name,
-  stateListeners: StateListeners<Store>,
-) => {
-  const newStore = {
-    [stateName]: newState,
-  } as Store;
-
-  // Check to see if the new state meets the update requirements
-  // set by the component before updating.
-  stateListeners.forEach((listener) => {
-    if (listener.equalFn) {
-      if (listener.equalFn(newStore, store)) {
-        listener.setState(JSON.parse(JSON.stringify(newStore)));
-      }
-    } else {
-      listener.setState(newStore);
-    }
-  });
-  store[stateName] = newState;
 };
