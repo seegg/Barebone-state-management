@@ -168,6 +168,8 @@ export type StateListeners<State> = Map<
 
 export type EqualityFn<State> = (newState: State, oldState: State) => boolean;
 
+export type StoreChangeListener<S extends Store> = (store: S) => void;
+
 /**
  * Type for the actions available from the store.
  *

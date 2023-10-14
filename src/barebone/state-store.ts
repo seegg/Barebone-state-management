@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { StateListeners, Store } from './types';
+import type {
+  EqualityFn,
+  StateListeners,
+  Store,
+  StoreChangeListener,
+} from './types';
 
 export class StateStore<Name extends string = string, State = any> {
   stateListeners: StateListeners<Store<Name, State>>;
@@ -13,29 +18,33 @@ export class StateStore<Name extends string = string, State = any> {
   }
 
   /**
-   * Subscribe to state changes and return the unsubscribe function.
+   * Subscribe to store updates and return the unsubscribe function.
    */
   subscribe(
-    setState: (store: Store<Name, State>) => void,
-    equalFn: (
-      oldStore: Store<Name, State>,
-      newStore: Store<Name, State>,
-    ) => boolean,
+    storeChangeListener: StoreChangeListener<Store<Name, State>>,
+    equalFn: EqualityFn<Store<Name, State>>,
   ) {
-    if (this.stateListeners.has(setState)) {
+    if (this.stateListeners.has(storeChangeListener)) {
       return;
     }
-    this.stateListeners.set(setState, { setState, equalFn });
+    this.stateListeners.set(storeChangeListener, {
+      setState: storeChangeListener,
+      equalFn,
+    });
 
     return () => {
-      this.unsubscribe(setState);
+      this.unsubscribe(storeChangeListener);
     };
   }
 
-  unsubscribe(setState: (store: Store<Name, State>) => void) {
-    this.stateListeners.delete(setState);
+  unsubscribe(storeChangeListener: StoreChangeListener<Store<Name, State>>) {
+    this.stateListeners.delete(storeChangeListener);
   }
 
+  /**
+   * Update the store, check each listener to see if each local state
+   * should be updated as well.
+   */
   updateState(newState: State) {
     const newStore = { [this.stateName]: newState } as Store;
 
